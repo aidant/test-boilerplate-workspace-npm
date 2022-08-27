@@ -41,7 +41,8 @@ jobs:
     runs-on: ubuntu-latest
     needs: list-packages
     strategy:
-      matrix: ${{ fromJSON(needs.list-packages.outputs.packages) }}
+      matrix:
+        package: ${{ fromJSON(needs.list-packages.outputs.packages) }}
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -58,30 +59,30 @@ jobs:
 
       - name: Build
         run: npm run build
-        working-directory: ${{ matrix.directory }}
+        working-directory: ${{ matrix.package.directory }}
 
       # - name: Configure NPM Credentials
-      #   if: ${{ matrix.private == false }}
+      #   if: ${{ matrix.package.private == false }}
       #   run: npm set //registry.npmjs.org/:_authToken $NPM_TOKEN
       #   env:
       #     NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: NPM Pre-Publish Checks
-        if: ${{ matrix.private == false }}
-        run: node -p "'IS_PUBLISHED=' + $(npm view ${{ matrix.name }} versions --json 2>/dev/null || echo "[]").includes('${{ matrix.version }}')" >> $GITHUB_ENV
-        working-directory: ${{ matrix.directory }}
+        if: ${{ matrix.package.private == false }}
+        run: node -p "'IS_PUBLISHED=' + $(npm view ${{ matrix.package.name }} versions --json 2>/dev/null || echo "[]").includes('${{ matrix.package.version }}')" >> $GITHUB_ENV
+        working-directory: ${{ matrix.package.directory }}
 
       - name: NPM Pre-Publish Prepare Package
-        if: ${{ matrix.private == false && env.IS_PUBLISHED == 'false' }}
-        run: node -e "dependencies = ${{toJSON(matrix.dependencies)}}; fs.writeFileSync('./package.json', fs.readFileSync('./package.json', 'utf-8').replace(new RegExp(`"(${Object.keys(dependencies).join('|')})":(\\s?)"\\*"`, 'g'), (_, $1, $2) => `"${$1}":${$2}"^${dependencies[$1]}"`))"
-        working-directory: ${{ matrix.directory }}
+        if: ${{ matrix.package.private == false && env.IS_PUBLISHED == 'false' }}
+        run: node -e "dependencies = ${{toJSON(matrix.package.dependencies)}}; fs.writeFileSync('./package.json', fs.readFileSync('./package.json', 'utf-8').replace(new RegExp(`"(${Object.keys(dependencies).join('|')})":(\\s?)"\\*"`, 'g'), (_, $1, $2) => `"${$1}":${$2}"^${dependencies[$1]}"`))"
+        working-directory: ${{ matrix.package.directory }}
 
       - name: Debug
-        if: ${{ matrix.private == false && env.IS_PUBLISHED == 'false' }}
+        if: ${{ matrix.package.private == false && env.IS_PUBLISHED == 'false' }}
         run: cat package.json
-        working-directory: ${{ matrix.directory }}
+        working-directory: ${{ matrix.package.directory }}
 
       - name: NPM Publish
-        if: ${{ matrix.private == false && env.IS_PUBLISHED == 'false' }}
-        run: echo npm --workspace=${{ matrix.name }} publish --access=public
-        working-directory: ${{ matrix.directory }}
+        if: ${{ matrix.package.private == false && env.IS_PUBLISHED == 'false' }}
+        run: echo npm --workspace=${{ matrix.package.name }} publish --access=public
+        working-directory: ${{ matrix.package.directory }}
