@@ -27,8 +27,8 @@ jobs:
         run: |
           echo "::set-output name=packages::$(
             npm ls --production --depth 1 -json |
-            jq '.dependencies | map(.resolved[9:])' |
-            node -p "JSON.stringify(JSON.parse(fs.readFileSync(0, 'utf-8')).map(directory => ({ ...require(directory + '/package.json'), directory })))" |
+            jq '.dependencies | map(.resolved | sub("file:(../)*"; ""))' |
+            node -p "JSON.stringify(JSON.parse(fs.readFileSync(0, 'utf-8')).map(directory => ({ ...require('./' + directory + '/package.json'), directory })))" |
             jq '. as $parent | map({ directory, name, version, private, dependencies: $parent | map({ (.name): .version }) | add })' |
             node -p "JSON.stringify(JSON.parse(fs.readFileSync(0, 'utf-8')))"
           )"
