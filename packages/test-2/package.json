@@ -3,7 +3,7 @@
   "version": "2.0.0-alpha.0",
   "description": "Infra-Sight is an elegant UX focused API for Overwatch.",
   "license": "MIT",
-  "private": true,
+  "private": false,
   "repository": {
     "directory": "packages/infra-sight-aws",
     "type": "git",
