@@ -74,7 +74,7 @@ jobs:
 
       - name: NPM Pre-Publish Prepare Package
         if: ${{ matrix.package.private == false && env.IS_PUBLISHED == 'false' }}
-        run: node -e "workspaces = JSON.parse(process.env.WORKSPACES); fs.writeFileSync('./package.json', fs.readFileSync('./package.json', 'utf-8').replace(new RegExp(\`"(${Object.keys(workspaces).join('|')})":(\\s?)"\\*"\`, 'g'), (_, $1, $2) => \`"${$1}":${$2}"^${workspaces[$1]}"\`))"
+        run: node -e "workspaces = JSON.parse(process.env.WORKSPACES); fs.writeFileSync('./package.json', fs.readFileSync('./package.json', 'utf-8').replace(new RegExp('"(' + Object.keys(workspaces).join('|') + ')":(\\s?)"\\*"', 'g'), (_, $1, $2) => '"' + $1 + '":' + $2 + '"^' + workspaces[$1] + '"'))"
         working-directory: ${{ matrix.package.directory }}
         env:
           WORKSPACES: ${{ toJSON(matrix.package.workspaces) }}
