@@ -32,12 +32,12 @@ jobs:
             npm ls --production --depth 1 -json |
             jq '.dependencies | map(.resolved | sub("file:(../)*"; ""))' |
             node -p "JSON.stringify(JSON.parse(fs.readFileSync(0, 'utf-8')).map(directory => ({ ...require('./' + directory + '/package.json'), directory })))" |
-            jq '. as $parent | map({ directory, name, version, private, workspaces: $parent | map({ (.name): .version }) | add | tostring })' |
+            jq '. as $parent | map({ directory, name, version, private, workspaces: $parent | map({ (.name): .version }) | add })' |
             node -p "JSON.stringify(JSON.parse(fs.readFileSync(0, 'utf-8')))"
           )"
 
   publish:
-    name: NPM Publish
+    name: NPM Publish ${{ matrix.package.name }}@${{ matrix.package.version }}
     runs-on: ubuntu-latest
     needs: list-packages
     strategy:
@@ -74,8 +74,10 @@ jobs:
 
       - name: NPM Pre-Publish Prepare Package
         if: ${{ matrix.package.private == false && env.IS_PUBLISHED == 'false' }}
-        run: node -e "workspaces = ${{matrix.package.workspaces}}; fs.writeFileSync('./package.json', fs.readFileSync('./package.json', 'utf-8').replace(new RegExp(`"(${Object.keys(workspaces).join('|')})":(\\s?)"\\*"`, 'g'), (_, $1, $2) => `"${$1}":${$2}"^${workspaces[$1]}"`))"
+        run: node -e "workspaces = JSON.parse(process.env.WORKSPACES); fs.writeFileSync('./package.json', fs.readFileSync('./package.json', 'utf-8').replace(new RegExp(`"(${Object.keys(workspaces).join('|')})":(\\s?)"\\*"`, 'g'), (_, $1, $2) => `"${$1}":${$2}"^${workspaces[$1]}"`))"
         working-directory: ${{ matrix.package.directory }}
+        env:
+          WORKSPACES: ${{ toJSON(matrix.package.workspaces) }}
 
       - name: Debug
         if: ${{ matrix.package.private == false && env.IS_PUBLISHED == 'false' }}
