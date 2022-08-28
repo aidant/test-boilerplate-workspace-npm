@@ -29,7 +29,8 @@ jobs:
             npm ls --production --depth 1 --json 2> /dev/null |
             jq '.problems | map(select(startswith("missing: ")) | .[9:] | split(", required by ") | .[0] | split("@file:")) | map(.[1])' |
             node -p "JSON.stringify(JSON.parse(fs.readFileSync(0, 'utf-8')).map(directory => ({ ...require(directory + '/package.json'), directory })))" |
-            jq '. as $parent | map({ directory, name, version, private, workspaces: $parent | map({ (.name): .version }) | add })'
+            jq '. as $parent | map({ directory, name, version, private, workspaces: $parent | map({ (.name): .version }) | add })' |
+            node -p "JSON.stringify(JSON.parse(fs.readFileSync(0, 'utf-8')))"
           )"
 
   publish:
